@@ -6,7 +6,7 @@
 [![Prisma](https://img.shields.io/badge/Prisma-5.22-darkblue.svg)](https://www.prisma.io/)
 [![React](https://img.shields.io/badge/React-18-cyan.svg)](https://react.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-teal.svg)](https://tailwindcss.com/)
-[![Tests](https://img.shields.io/badge/Tests-16%20Passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-19%20Passed-brightgreen.svg)]()
 
 A full-stack, enterprise-grade **Request for Quotation (RFQ) Portal** engineered for B2B industrial procurement. Enables Buyers to publish multi-line-item RFQs, Vendors to submit and revise sealed bids before deadlines, and Buyers to evaluate bids using a side-by-side comparison matrix and execute atomic contract awards.
 
@@ -85,7 +85,7 @@ cd backend
 npm test
 ```
 
-### Verified Test Suite (16 / 16 Passed):
+### Verified Test Suite (19 / 19 Passed):
 1. `business_logic.test.ts`:
    - Computes effective status as `CLOSED` lazily when deadline elapses
    - Rejects cross-buyer RFQ queries with `404` (sealed information hiding)

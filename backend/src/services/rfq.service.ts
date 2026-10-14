@@ -241,43 +241,105 @@ export class RfqService {
     const { page, limit, search, category, deliveryLocation, status, sortBy, sortOrder } = params;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.RFQWhereInput = {};
+    const andConditions: Prisma.RFQWhereInput[] = [];
 
-    // 1. Role Scoping
+    // 1. Role and Status Scoping
     if (userRole === Role.VENDOR) {
-      // Vendors only see open/closed/awarded RFQs; never DRAFTs
-      where.status = {
-        in: [RfqStatus.PUBLISHED, RfqStatus.CLOSED, RfqStatus.AWARDED],
-      };
+      if (status) {
+        if (status === RfqStatus.DRAFT) {
+          // Vendors must never view DRAFT RFQs
+          andConditions.push({ id: '__unauthorized_draft_rfq__' });
+        } else if (status === RfqStatus.PUBLISHED) {
+          andConditions.push({
+            status: RfqStatus.PUBLISHED,
+            deadline: { gt: new Date() },
+          });
+        } else if (status === RfqStatus.CLOSED) {
+          andConditions.push({
+            OR: [
+              { status: RfqStatus.CLOSED },
+              { status: RfqStatus.PUBLISHED, deadline: { lte: new Date() } },
+            ],
+          });
+        } else {
+          andConditions.push({ status });
+        }
+      } else {
+        // Vendors only see open/closed/awarded RFQs; never DRAFTs
+        andConditions.push({
+          status: {
+            in: [RfqStatus.PUBLISHED, RfqStatus.CLOSED, RfqStatus.AWARDED],
+          },
+        });
+      }
     } else if (userRole === Role.BUYER) {
       // Buyers see their own RFQs by default
-      where.buyerId = userId;
+      andConditions.push({ buyerId: userId });
       if (status) {
-        where.status = status;
+        if (status === RfqStatus.PUBLISHED) {
+          andConditions.push({
+            status: RfqStatus.PUBLISHED,
+            deadline: { gt: new Date() },
+          });
+        } else if (status === RfqStatus.CLOSED) {
+          andConditions.push({
+            OR: [
+              { status: RfqStatus.CLOSED },
+              { status: RfqStatus.PUBLISHED, deadline: { lte: new Date() } },
+            ],
+          });
+        } else {
+          andConditions.push({ status });
+        }
       }
     } else if (userRole === Role.ADMIN) {
       if (status) {
-        where.status = status;
+        if (status === RfqStatus.PUBLISHED) {
+          andConditions.push({
+            status: RfqStatus.PUBLISHED,
+            deadline: { gt: new Date() },
+          });
+        } else if (status === RfqStatus.CLOSED) {
+          andConditions.push({
+            OR: [
+              { status: RfqStatus.CLOSED },
+              { status: RfqStatus.PUBLISHED, deadline: { lte: new Date() } },
+            ],
+          });
+        } else {
+          andConditions.push({ status });
+        }
       }
     }
 
-    // 2. Filters
-    if (category) {
-      where.category = { equals: category, mode: 'insensitive' };
+    // 2. Category Filter (case-insensitive partial match)
+    if (category && category.trim()) {
+      andConditions.push({
+        category: { contains: category.trim(), mode: 'insensitive' },
+      });
     }
 
-    if (deliveryLocation) {
-      where.deliveryLocation = { contains: deliveryLocation, mode: 'insensitive' };
+    // 3. Location Filter (case-insensitive partial match)
+    if (deliveryLocation && deliveryLocation.trim()) {
+      andConditions.push({
+        deliveryLocation: { contains: deliveryLocation.trim(), mode: 'insensitive' },
+      });
     }
 
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { category: { contains: search, mode: 'insensitive' } },
-        { deliveryLocation: { contains: search, mode: 'insensitive' } },
-      ];
+    // 4. Keyword Search
+    if (search && search.trim()) {
+      const q = search.trim();
+      andConditions.push({
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+          { category: { contains: q, mode: 'insensitive' } },
+          { deliveryLocation: { contains: q, mode: 'insensitive' } },
+        ],
+      });
     }
+
+    const where: Prisma.RFQWhereInput = andConditions.length > 0 ? { AND: andConditions } : {};
 
     const [total, rawRfqs] = await Promise.all([
       prisma.rFQ.count({ where }),

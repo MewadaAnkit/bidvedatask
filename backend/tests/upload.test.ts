@@ -1,41 +1,13 @@
 import request from 'supertest';
 import { createApp } from '../src/app';
 import { createTestToken, testUsers } from './setup';
-import { prisma } from '../src/db';
 
 const app = createApp();
 const buyerToken = createTestToken(testUsers.buyer1);
 
 describe('File Upload Security & Validation (Test #10)', () => {
-  let testRfqId: string;
+  const testRfqId = 'b0000000-0000-0000-0000-000000000001';
 
-  beforeAll(async () => {
-    // If DB is available, create or mock an RFQ, or test endpoint directly
-    // Let's create an in-memory or database test RFQ if DB connected
-    try {
-      const rfq = await prisma.rFQ.create({
-        data: {
-          buyerId: testUsers.buyer1.id,
-          title: 'Upload Test RFQ',
-          description: 'Testing upload security',
-          category: 'Testing',
-          deliveryLocation: 'Pune',
-          deadline: new Date(Date.now() + 1000000),
-          status: 'DRAFT',
-        },
-      });
-      testRfqId = rfq.id;
-    } catch {
-      testRfqId = '00000000-0000-0000-0000-000000000099';
-    }
-  });
-
-  afterAll(async () => {
-    try {
-      await prisma.rFQ.deleteMany({ where: { title: 'Upload Test RFQ' } });
-      await prisma.$disconnect();
-    } catch {}
-  });
 
   it('rejects upload with forbidden extension (.exe, .txt)', async () => {
     const res = await request(app)

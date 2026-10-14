@@ -9,31 +9,31 @@ export function createTestToken(payload: { id: string; email: string; role: Role
 
 export const testUsers = {
   admin: {
-    id: '00000000-0000-0000-0000-000000000001',
+    id: 'a0000000-0000-0000-0000-000000000001',
     email: 'admin@bidveda.com',
     role: Role.ADMIN,
     name: 'Admin User',
   },
   buyer1: {
-    id: '00000000-0000-0000-0000-000000000002',
+    id: 'b0000000-0000-0000-0000-000000000001',
     email: 'buyer1@company.com',
     role: Role.BUYER,
     name: 'Acme Buyer',
   },
   buyer2: {
-    id: '00000000-0000-0000-0000-000000000003',
+    id: 'b0000000-0000-0000-0000-000000000002',
     email: 'buyer2@company.com',
     role: Role.BUYER,
     name: 'Apex Buyer',
   },
   vendor1: {
-    id: '00000000-0000-0000-0000-000000000004',
+    id: 'c0000000-0000-0000-0000-000000000001',
     email: 'vendor1@tech.com',
     role: Role.VENDOR,
     name: 'Precision Vendor',
   },
   vendor2: {
-    id: '00000000-0000-0000-0000-000000000005',
+    id: 'c0000000-0000-0000-0000-000000000002',
     email: 'vendor2@build.com',
     role: Role.VENDOR,
     name: 'Global Vendor',

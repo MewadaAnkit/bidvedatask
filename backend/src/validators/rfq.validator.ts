@@ -33,10 +33,13 @@ export const createRfqSchema = z.object({
 export const updateRfqSchema = createRfqSchema;
 
 export const rfqQuerySchema = z.object({
-  search: z.string().optional(),
-  category: z.string().optional(),
-  deliveryLocation: z.string().optional(),
-  status: z.nativeEnum(RfqStatus).optional(),
+  search: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().optional()),
+  category: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().optional()),
+  deliveryLocation: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().optional()),
+  status: z.preprocess(
+    (val) => (val === '' || val === null ? undefined : val),
+    z.nativeEnum(RfqStatus).optional()
+  ),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
   sortBy: z.enum(['createdAt', 'deadline', 'budget', 'title']).default('createdAt'),

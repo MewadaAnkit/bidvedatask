@@ -195,7 +195,10 @@ export const RFQListPage: React.FC = () => {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search keyword..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
             />
@@ -207,7 +210,10 @@ export const RFQListPage: React.FC = () => {
             <input
               type="text"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setPage(1);
+              }}
               placeholder="Category (e.g. Machinery)..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
             />
@@ -219,7 +225,10 @@ export const RFQListPage: React.FC = () => {
             <input
               type="text"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                setPage(1);
+              }}
               placeholder="Delivery Location..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
             />
@@ -236,7 +245,7 @@ export const RFQListPage: React.FC = () => {
               className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-700"
             >
               <option value="">All Statuses</option>
-              {isBuyer && <option value="DRAFT">Drafts</option>}
+              {(isBuyer || isAdmin) && <option value="DRAFT">Drafts</option>}
               <option value="PUBLISHED">Published</option>
               <option value="CLOSED">Closed</option>
               <option value="AWARDED">Awarded</option>

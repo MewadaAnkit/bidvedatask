@@ -48,6 +48,96 @@ describe('Core Business Logic & Invariant Unit Checks', () => {
         RfqService.getRfqById('vendor-1', Role.VENDOR, 'draft-rfq')
       ).rejects.toThrow(AppError);
     });
+
+    it('correctly filters RFQs by status for Vendor role (including AWARDED)', async () => {
+      const countSpy = jest.spyOn(prisma.rFQ, 'count').mockResolvedValueOnce(1);
+      const findManySpy = jest.spyOn(prisma.rFQ, 'findMany').mockResolvedValueOnce([
+        {
+          id: 'rfq-awarded',
+          title: 'Awarded RFQ',
+          status: RfqStatus.AWARDED,
+          deadline: new Date(Date.now() + 100000),
+          category: 'Machinery',
+          deliveryLocation: 'Mumbai',
+        },
+      ] as any);
+
+      const result = await RfqService.listRfqs('vendor-1', Role.VENDOR, {
+        page: 1,
+        limit: 10,
+        status: RfqStatus.AWARDED,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
+
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].status).toBe(RfqStatus.AWARDED);
+
+      // Verify Prisma received the status filter in where.AND
+      const lastCall = findManySpy.mock.calls[0][0];
+      expect(lastCall?.where?.AND).toContainEqual(
+        expect.objectContaining({ status: RfqStatus.AWARDED })
+      );
+
+      countSpy.mockRestore();
+      findManySpy.mockRestore();
+    });
+
+    it('prevents vendors from seeing DRAFT RFQs even if status=DRAFT is requested', async () => {
+      const countSpy = jest.spyOn(prisma.rFQ, 'count').mockResolvedValueOnce(0);
+      const findManySpy = jest.spyOn(prisma.rFQ, 'findMany').mockResolvedValueOnce([]);
+
+      const result = await RfqService.listRfqs('vendor-1', Role.VENDOR, {
+        page: 1,
+        limit: 10,
+        status: RfqStatus.DRAFT,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
+
+      expect(result.data.length).toBe(0);
+      const lastCall = findManySpy.mock.calls[0][0];
+      expect(lastCall?.where?.AND).toContainEqual(
+        expect.objectContaining({ id: '__unauthorized_draft_rfq__' })
+      );
+
+      countSpy.mockRestore();
+      findManySpy.mockRestore();
+    });
+
+    it('filters RFQs by category and deliveryLocation using case-insensitive contains', async () => {
+      const countSpy = jest.spyOn(prisma.rFQ, 'count').mockResolvedValueOnce(1);
+      const findManySpy = jest.spyOn(prisma.rFQ, 'findMany').mockResolvedValueOnce([
+        {
+          id: 'rfq-machinery',
+          title: 'Heavy Plant',
+          status: RfqStatus.PUBLISHED,
+          deadline: new Date(Date.now() + 100000),
+          category: 'Machinery & Tools',
+          deliveryLocation: 'Indore',
+        },
+      ] as any);
+
+      await RfqService.listRfqs('vendor-1', Role.VENDOR, {
+        page: 1,
+        limit: 10,
+        category: 'machin',
+        deliveryLocation: 'indo',
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
+
+      const lastCall = findManySpy.mock.calls[0][0];
+      expect(lastCall?.where?.AND).toContainEqual({
+        category: { contains: 'machin', mode: 'insensitive' },
+      });
+      expect(lastCall?.where?.AND).toContainEqual({
+        deliveryLocation: { contains: 'indo', mode: 'insensitive' },
+      });
+
+      countSpy.mockRestore();
+      findManySpy.mockRestore();
+    });
   });
 
   describe('Quote Invariants (Tests #1, #2, #3, #4, #9)', () => {
