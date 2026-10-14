@@ -6,6 +6,12 @@ const prisma = new PrismaClient();
 async function main() {
   console.log(' Starting database seed...');
 
+  const userCount = await prisma.user.count();
+  if (userCount > 0 && process.env.FORCE_SEED !== 'true') {
+    console.log(` Database already seeded (${userCount} users found). Skipping seed to preserve data.`);
+    return;
+  }
+
   // Clean existing data in reverse dependency order
   await prisma.statusHistory.deleteMany();
   await prisma.attachment.deleteMany();

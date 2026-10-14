@@ -2,6 +2,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install OpenSSL and libc compatibility (required by Prisma on Alpine)
+RUN apk add --no-cache openssl libc6-compat
+
 # Install build dependencies
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -21,6 +24,9 @@ RUN npm run build
 FROM node:20-alpine AS runner
 
 WORKDIR /app
+
+# Install OpenSSL and libc compatibility for Prisma CLI & query engine
+RUN apk add --no-cache openssl libc6-compat
 
 ENV NODE_ENV=production
 
@@ -43,3 +49,4 @@ RUN mkdir -p uploads
 EXPOSE 5000
 
 CMD ["./docker-entrypoint.sh"]
+
