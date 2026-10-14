@@ -1,0 +1,177 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  BUYER
+  VENDOR
+  ADMIN
+}
+
+enum RfqStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  AWARDED
+}
+
+enum QuoteStatus {
+  SUBMITTED
+  SHORTLISTED
+  ACCEPTED
+  REJECTED
+}
+
+enum EntityType {
+  RFQ
+  QUOTE
+}
+
+model User {
+  id           String          @id @default(uuid())
+  email        String          @unique
+  passwordHash String
+  name         String
+  role         Role
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  rfqs          RFQ[]
+  quotes        Quote[]
+  attachments   Attachment[]
+  statusChanges StatusHistory[]
+
+  @@map("users")
+}
+
+model RFQ {
+  id               String          @id @default(uuid())
+  buyerId          String
+  buyer            User            @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  title            String
+  description      String          @db.Text
+  category         String
+  deliveryLocation String
+  budget           Decimal?        @db.Decimal(14, 2)
+  deadline         DateTime
+  status           RfqStatus       @default(DRAFT)
+  awardedQuoteId   String?         @unique
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  lineItems    RFQLineItem[]
+  quotes       Quote[]
+  awardedQuote Quote?          @relation("AwardedQuote", fields: [awardedQuoteId], references: [id])
+
+  @@index([status, deadline])
+  @@index([buyerId])
+  @@index([category])
+  @@index([deliveryLocation])
+  @@map("rfqs")
+}
+
+model RFQLineItem {
+  id       String  @id @default(uuid())
+  rfqId    String
+  rfq      RFQ     @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  name     String
+  quantity Decimal @db.Decimal(14, 2)
+  unit     String
+
+  quotePrices QuoteRevisionPrice[]
+
+  @@index([rfqId])
+  @@map("rfq_line_items")
+}
+
+model Quote {
+  id                   String        @id @default(uuid())
+  rfqId                String
+  rfq                  RFQ           @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  vendorId             String
+  vendor               User          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  status               QuoteStatus   @default(SUBMITTED)
+  currentRevisionNumber Int          @default(1)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  revisions    QuoteRevision[]
+  awardedInRfq RFQ?          @relation("AwardedQuote")
+
+  @@unique([rfqId, vendorId])
+  @@index([rfqId])
+  @@index([vendorId])
+  @@map("quotes")
+}
+
+model QuoteRevision {
+  id             String      @id @default(uuid())
+  quoteId        String
+  quote          Quote       @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  revisionNumber Int
+  deliveryDays   Int
+  notes          String?     @db.Text
+  totalAmount    Decimal     @db.Decimal(14, 2)
+  createdAt      DateTime    @default(now())
+
+  prices QuoteRevisionPrice[]
+
+  @@unique([quoteId, revisionNumber])
+  @@index([quoteId])
+  @@map("quote_revisions")
+}
+
+model QuoteRevisionPrice {
+  id              String        @id @default(uuid())
+  quoteRevisionId String
+  quoteRevision   QuoteRevision @relation(fields: [quoteRevisionId], references: [id], onDelete: Cascade)
+  rfqLineItemId   String
+  rfqLineItem     RFQLineItem   @relation(fields: [rfqLineItemId], references: [id], onDelete: Cascade)
+  unitPrice       Decimal       @db.Decimal(14, 2)
+  lineTotal       Decimal       @db.Decimal(14, 2)
+
+  @@unique([quoteRevisionId, rfqLineItemId])
+  @@index([quoteRevisionId])
+  @@index([rfqLineItemId])
+  @@map("quote_revision_line_item_prices")
+}
+
+model Attachment {
+  id               String     @id @default(uuid())
+  uploaderId       String
+  uploader         User       @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  entityType       EntityType
+  entityId         String
+  originalFilename String
+  storedFilename   String
+  filePath         String
+  mimeType         String
+  fileSize         Int
+  createdAt        DateTime   @default(now())
+
+  @@index([entityType, entityId])
+  @@index([uploaderId])
+  @@map("attachments")
+}
+
+model StatusHistory {
+  id          String     @id @default(uuid())
+  changedById String
+  changedBy   User       @relation(fields: [changedById], references: [id], onDelete: Cascade)
+  entityType  EntityType
+  entityId    String
+  fromStatus  String
+  toStatus    String
+  reason      String?    @db.Text
+  createdAt   DateTime   @default(now())
+
+  @@index([entityType, entityId])
+  @@index([changedById])
+  @@map("status_history")
+}

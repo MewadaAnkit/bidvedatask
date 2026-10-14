@@ -1,0 +1,366 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Mini RFQ Portal API",
+    "version": "1.0.0",
+    "description": "Production REST API for Mini RFQ Portal with sealed-bid quoting, line-item precision arithmetic, role-based access control (RBAC), and atomic awarding transactions."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": { "type": "object" }
+            },
+            "required": ["code", "message"]
+          }
+        }
+      },
+      "RegisterInput": {
+        "type": "object",
+        "required": ["name", "email", "password", "role"],
+        "properties": {
+          "name": { "type": "string", "example": "Acme Industrial" },
+          "email": { "type": "string", "format": "email", "example": "buyer@company.com" },
+          "password": { "type": "string", "minLength": 6, "example": "Password123!" },
+          "role": { "type": "string", "enum": ["BUYER", "VENDOR"], "example": "BUYER" }
+        }
+      },
+      "LoginInput": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "buyer1@company.com" },
+          "password": { "type": "string", "example": "Password123!" }
+        }
+      },
+      "RfqLineItemInput": {
+        "type": "object",
+        "required": ["name", "quantity", "unit"],
+        "properties": {
+          "name": { "type": "string", "example": "Grade 8.8 M16 Hex Bolts" },
+          "quantity": { "type": "number", "example": 2000 },
+          "unit": { "type": "string", "example": "PCS" }
+        }
+      },
+      "CreateRfqInput": {
+        "type": "object",
+        "required": ["title", "description", "category", "deliveryLocation", "deadline", "lineItems"],
+        "properties": {
+          "title": { "type": "string", "example": "Structural Steel Fasteners Supply" },
+          "description": { "type": "string", "example": "Procurement of high tensile bolts for industrial assembly" },
+          "category": { "type": "string", "example": "Hardware" },
+          "deliveryLocation": { "type": "string", "example": "Bengaluru, Karnataka" },
+          "budget": { "type": "number", "example": 500000 },
+          "deadline": { "type": "string", "format": "date-time", "example": "2026-10-25T18:00:00Z" },
+          "lineItems": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RfqLineItemInput" }
+          }
+        }
+      },
+      "QuotePriceItemInput": {
+        "type": "object",
+        "required": ["rfqLineItemId", "unitPrice"],
+        "properties": {
+          "rfqLineItemId": { "type": "string", "format": "uuid" },
+          "unitPrice": { "type": "number", "example": 120.50 }
+        }
+      },
+      "SubmitQuoteInput": {
+        "type": "object",
+        "required": ["deliveryDays", "prices"],
+        "properties": {
+          "deliveryDays": { "type": "integer", "example": 10 },
+          "notes": { "type": "string", "example": "Ex-stock available for immediate dispatch" },
+          "prices": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/QuotePriceItemInput" }
+          }
+        }
+      },
+      "AwardInput": {
+        "type": "object",
+        "required": ["quoteId"],
+        "properties": {
+          "quoteId": { "type": "string", "format": "uuid" },
+          "reason": { "type": "string", "example": "Lowest cost and fastest delivery schedule" }
+        }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new Buyer or Vendor",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/RegisterInput" } }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created successfully with JWT token" },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "409": { "description": "Email already exists" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Authenticate user and issue JWT",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/LoginInput" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "Authenticated successfully" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get authenticated user profile",
+        "responses": {
+          "200": { "description": "User profile data" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/rfqs": {
+      "get": {
+        "tags": ["RFQs"],
+        "summary": "List RFQs with search, filters and pagination",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "deliveryLocation", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["DRAFT", "PUBLISHED", "CLOSED", "AWARDED"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated list of RFQs" }
+        }
+      },
+      "post": {
+        "tags": ["RFQs"],
+        "summary": "Create a new RFQ in DRAFT mode (Buyer/Admin)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateRfqInput" } }
+          }
+        },
+        "responses": {
+          "201": { "description": "RFQ draft created" },
+          "403": { "description": "Forbidden (Vendors cannot create RFQs)" }
+        }
+      }
+    },
+    "/api/rfqs/{id}": {
+      "get": {
+        "tags": ["RFQs"],
+        "summary": "Get RFQ details by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "RFQ details with line items" },
+          "404": { "description": "RFQ not found or access forbidden (sealed resource)" }
+        }
+      },
+      "put": {
+        "tags": ["RFQs"],
+        "summary": "Update an RFQ (Allowed only when DRAFT)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateRfqInput" } } }
+        },
+        "responses": {
+          "200": { "description": "RFQ updated" },
+          "400": { "description": "Cannot edit non-draft RFQ" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/publish": {
+      "patch": {
+        "tags": ["RFQs"],
+        "summary": "Publish a DRAFT RFQ to public bidding",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "RFQ successfully published" },
+          "400": { "description": "Invalid deadline or no line items" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/quotes": {
+      "post": {
+        "tags": ["Quotes"],
+        "summary": "Submit initial quote on an RFQ (Vendor only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SubmitQuoteInput" } } }
+        },
+        "responses": {
+          "201": { "description": "Quote submitted successfully" },
+          "400": { "description": "Deadline passed or incomplete quote" },
+          "409": { "description": "Quote already exists (use revision)" }
+        }
+      },
+      "put": {
+        "tags": ["Quotes"],
+        "summary": "Revise an existing quote before deadline (Vendor only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SubmitQuoteInput" } } }
+        },
+        "responses": {
+          "200": { "description": "New revision created and totals updated" },
+          "400": { "description": "Deadline passed or invalid status" }
+        }
+      },
+      "get": {
+        "tags": ["Quotes"],
+        "summary": "Get all quotes submitted for an RFQ (Buyer/Admin only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "List of quotes with latest revisions" },
+          "403": { "description": "Forbidden for vendors" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/my-quote": {
+      "get": {
+        "tags": ["Quotes"],
+        "summary": "Vendor views their own quote and full revision history",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Quote details with all revision history" },
+          "404": { "description": "No quote found" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/comparison": {
+      "get": {
+        "tags": ["Evaluation & Award"],
+        "summary": "Side-by-side line item comparison matrix (Buyer/Admin only)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string", "enum": ["totalAmount", "deliveryDays"] } },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"] } }
+        ],
+        "responses": {
+          "200": { "description": "Comparison matrix and summary metrics" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/quotes/{quoteId}/shortlist": {
+      "patch": {
+        "tags": ["Evaluation & Award"],
+        "summary": "Toggle shortlist status on a vendor quote",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "quoteId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Quote shortlist status updated" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/award": {
+      "post": {
+        "tags": ["Evaluation & Award"],
+        "summary": "Atomically award RFQ to chosen quote (Buyer/Admin only)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AwardInput" } } }
+        },
+        "responses": {
+          "200": { "description": "RFQ successfully awarded; other quotes rejected" },
+          "400": { "description": "Already awarded or deadline not yet passed" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/status-history": {
+      "get": {
+        "tags": ["Evaluation & Award"],
+        "summary": "View complete audit trail of status transitions",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Chronological status history events" }
+        }
+      }
+    },
+    "/api/rfqs/{id}/attachments": {
+      "post": {
+        "tags": ["Attachments"],
+        "summary": "Upload specification document to RFQ (PDF/XLSX only, max 10MB)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": { "file": { "type": "string", "format": "binary" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "File uploaded and registered" },
+          "400": { "description": "Invalid file type, fake extension, or oversized file" }
+        }
+      },
+      "get": {
+        "tags": ["Attachments"],
+        "summary": "List RFQ spec files",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "List of RFQ attachments" }
+        }
+      }
+    },
+    "/api/attachments/{id}/download": {
+      "get": {
+        "tags": ["Attachments"],
+        "summary": "Securely stream file download (authenticated and permission-checked)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Binary file stream with Content-Disposition" },
+          "404": { "description": "File not found or unauthorized access" }
+        }
+      }
+    }
+  }
+}
