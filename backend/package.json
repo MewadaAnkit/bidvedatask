@@ -4,18 +4,18 @@
   "description": "Mini RFQ Portal Backend - Node.js 20, Express, TypeScript, Prisma & PostgreSQL",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc prisma/seed.ts --outDir dist/prisma --target ES2022 --module commonjs --moduleResolution node --skipLibCheck --esModuleInterop",
     "start": "node dist/server.js",
     "dev": "nodemon --watch src -e ts --exec ts-node src/server.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
+    "prisma:seed": "node dist/prisma/seed.js",
     "prisma:studio": "prisma studio",
     "test": "jest --runInBand --detectOpenHandles"
   },
   "prisma": {
-    "seed": "ts-node --transpile-only prisma/seed.ts"
+    "seed": "node dist/prisma/seed.js"
   },
   "keywords": ["rfq", "procurement", "express", "prisma", "typescript"],
   "author": "",
