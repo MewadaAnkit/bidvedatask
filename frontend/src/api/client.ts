@@ -23,7 +23,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(endpoint, {
+  const baseUrl = (import.meta.env.VITE_API_URL as string) || '';
+  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+
+  const res = await fetch(url, {
     ...options,
     headers,
   });
