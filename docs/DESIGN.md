@@ -18,14 +18,14 @@ The objective is to architect and build a robust, end-to-end B2B **Request for Q
    - **Vendor:** Explores open published RFQs; submits multi-line-item pricing bids and delivery schedules before the deadline; uploads supporting documents; and revises quotations until the deadline expires.
    - **Admin:** System administrator with complete operational and oversight visibility: manages users (CRUD, role assignment, provisioning), supervises all platform RFQs across buyers, inspects sealed vendor quotations, and audits system-wide state transitions.
 2. **Lifecycle State Models:**
-   - **RFQ Lifecycle:** `DRAFT` $\longrightarrow$ `PUBLISHED` $\longrightarrow$ `CLOSED` $\longrightarrow$ `AWARDED`.
-   - **Quote Lifecycle:** `SUBMITTED` $\longrightarrow$ `SHORTLISTED` $\longrightarrow$ `ACCEPTED` or `REJECTED`.
+   - **RFQ Lifecycle:** `DRAFT` → `PUBLISHED` → `CLOSED` → `AWARDED`.
+   - **Quote Lifecycle:** `SUBMITTED` → `SHORTLISTED` → `ACCEPTED` or `REJECTED`.
 3. **Core Invariants & Rules:**
    - Quotes are **sealed bids**: a vendor can only view their own quote.
    - Quotes must price **100% of line items**; no partial bids are permitted.
    - Prices and quantities must maintain strict currency precision; calculations are performed **strictly on the server**.
    - Deadlines are evaluated using the **server clock**. No submissions or revisions are permitted once elapsed.
-   - The contract award flow is **atomic**: chosen quote $\rightarrow$ `ACCEPTED`, competing quotes $\rightarrow$ `REJECTED`, RFQ $\rightarrow$ `AWARDED`, accompanied by a complete status history audit log in a single database transaction with pessimistic row-level locking.
+   - The contract award flow is **atomic**: chosen quote → `ACCEPTED`, competing quotes → `REJECTED`, RFQ → `AWARDED`, accompanied by a complete status history audit log in a single database transaction with pessimistic row-level locking.
 
 ---
 
@@ -78,7 +78,7 @@ Each design assumption has a specific engineering rationale:
 
 The system follows a **3-Tier Layered Architecture** with strict separation of concerns:
 
-$$\text{Routes (Middleware \& Validation)} \longrightarrow \text{Controllers (HTTP Handling)} \longrightarrow \text{Services (Business Logic \& ACID Transactions)} \longrightarrow \text{Database (PostgreSQL)}$$
+> **Routes (Middleware & Validation)** → **Controllers (HTTP Handling)** → **Services (Business Logic & ACID Transactions)** → **Database (PostgreSQL)**
 
 ```mermaid
 graph TD
@@ -243,8 +243,8 @@ erDiagram
 2. **Quote Revisions:** The `quotes` table maintains active status and has a unique constraint `UNIQUE(rfqId, vendorId)`. Every revision adds an immutable record to `quote_revisions` (`UNIQUE(quoteId, revisionNumber)`).
 3. **Status History:** Stored in polymorphic `status_history` table recording `changedById`, `entityType`, `entityId`, `fromStatus`, `toStatus`, and optional `reason`.
 4. **Monetary Precision:** All money fields use `DECIMAL(14,2)`. Calculations:
-   $$\text{lineTotal} = \text{unitPrice} \times \text{quantity}$$
-   $$\text{totalAmount} = \sum \text{lineTotal}$$
+   - **lineTotal** = `unitPrice × quantity`
+   - **totalAmount** = `∑ lineTotal`
 5. **Database Indexes:**
    - `rfqs(status, deadline)`: Optimizes marketplace queries and lazy closure checks.
    - `rfqs(buyerId)`: Optimizes Buyer multi-tenant scoping.
@@ -268,7 +268,7 @@ erDiagram
 | `POST` | `/api/rfqs` | `BUYER`, `ADMIN` | Create an RFQ in `DRAFT` status with line items. |
 | `GET` | `/api/rfqs/:id` | Authenticated | View RFQ details (enforces 404 for cross-buyer and draft-vendor access). |
 | `PUT` | `/api/rfqs/:id` | `BUYER`, `ADMIN` | Update RFQ details and replace line items (only while in `DRAFT`). |
-| `PATCH` | `/api/rfqs/:id/publish` | `BUYER`, `ADMIN` | Transition RFQ from `DRAFT` $\rightarrow$ `PUBLISHED`. |
+| `PATCH` | `/api/rfqs/:id/publish` | `BUYER`, `ADMIN` | Transition RFQ from `DRAFT` → `PUBLISHED`. |
 | `POST` | `/api/rfqs/:id/quotes` | `VENDOR` | Submit initial quote before deadline with line item prices and turnaround days. |
 | `PUT` | `/api/rfqs/:id/quotes` | `VENDOR` | Revise quote before deadline (creates new revision row, recalculates totals). |
 | `GET` | `/api/rfqs/:id/my-quote` | `VENDOR` | Vendor views their own quote and full revision history. |
@@ -537,12 +537,12 @@ sequenceDiagram
 
 | Test Case | Flow / Invariant | Status | Verification Layer |
 |---|---|---|---|
-| **TC-01** | Vendor submits a quote before the deadline $\rightarrow$ `201` | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `QuoteService`) |
-| **TC-02** | Vendor revises quote before the deadline $\rightarrow$ new revision stored, totals updated | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `QuoteService`) |
-| **TC-03** | Quote submit/revise after deadline $\rightarrow$ rejected with `400 DEADLINE_PASSED` | **Implemented** | Jest + Supertest (`business_logic.test.ts`) |
-| **TC-04** | Vendor cannot read another vendor's quote $\rightarrow$ `404 NOT FOUND` | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `QuoteService`) |
-| **TC-05** | Vendor cannot create an RFQ; buyer cannot submit a quote $\rightarrow$ `403 FORBIDDEN` | **Implemented** | Jest + Supertest (`auth_and_roles.test.ts`) |
-| **TC-06** | Buyer cannot read or award another buyer's RFQ $\rightarrow$ `404 NOT FOUND` | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `RfqService`) |
+| **TC-01** | Vendor submits a quote before the deadline → `201` | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `QuoteService`) |
+| **TC-02** | Vendor revises quote before the deadline → new revision stored, totals updated | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `QuoteService`) |
+| **TC-03** | Quote submit/revise after deadline → rejected with `400 DEADLINE_PASSED` | **Implemented** | Jest + Supertest (`business_logic.test.ts`) |
+| **TC-04** | Vendor cannot read another vendor's quote → `404 NOT FOUND` | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `QuoteService`) |
+| **TC-05** | Vendor cannot create an RFQ; buyer cannot submit a quote → `403 FORBIDDEN` | **Implemented** | Jest + Supertest (`auth_and_roles.test.ts`) |
+| **TC-06** | Buyer cannot read or award another buyer's RFQ → `404 NOT FOUND` | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `RfqService`) |
 | **TC-07** | Award: chosen quote `ACCEPTED`, others `REJECTED`, RFQ `AWARDED`, status history rows created | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `AwardService`) |
 | **TC-08** | Cannot award twice; cannot award before deadline; cannot award a quote from another RFQ | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `AwardService`) |
 | **TC-09** | Totals computed correctly on server; incomplete quote (missing line item) rejected | **Implemented** | Jest + Supertest (`business_logic.test.ts` & `QuoteService`) |

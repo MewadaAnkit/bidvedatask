@@ -26,6 +26,7 @@ import {
   BarChart3,
   Building2,
   Lock,
+  Loader2,
 } from 'lucide-react';
 
 export const RFQDetailPage: React.FC = () => {
@@ -38,6 +39,39 @@ export const RFQDetailPage: React.FC = () => {
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isSpecUploadOpen, setIsSpecUploadOpen] = useState(false);
   const [isQuoteDocUploadOpen, setIsQuoteDocUploadOpen] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadAttachment = async (attId: string, filename: string) => {
+    try {
+      setDownloadingId(attId);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/attachments/${attId}/download`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        window.location.href = `/api/attachments/${attId}/download?token=${token || ''}`;
+        return;
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(link);
+      toast.success(`Downloaded ${filename}`);
+    } catch (error) {
+      console.error('Download error:', error);
+      const token = localStorage.getItem('token');
+      window.location.href = `/api/attachments/${attId}/download?token=${token || ''}`;
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   // 1. Fetch RFQ Master Data
   const { data: rfqRes, isLoading: rfqLoading } = useQuery({
@@ -197,26 +231,19 @@ export const RFQDetailPage: React.FC = () => {
         </div>
 
         {/* Metadata Details Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 text-xs">
           <div>
             <span className="text-slate-400 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5" /> Delivery Location
+              <Calendar className="w-3.5 h-3.5 text-slate-400" /> Deadline (Server Clock)
             </span>
-            <span className="font-medium text-slate-800 mt-1 block">{rfq.deliveryLocation}</span>
-          </div>
-
-          <div>
-            <span className="text-slate-400 flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" /> Deadline (Server Clock)
-            </span>
-            <span className={`font-mono mt-1 block ${isExpired ? 'text-amber-700 font-medium' : 'text-slate-800'}`}>
+            <span className={`font-mono mt-1 block font-medium ${isExpired ? 'text-amber-700' : 'text-slate-800'}`}>
               {new Date(rfq.deadline).toLocaleDateString()} {new Date(rfq.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
 
           <div>
             <span className="text-slate-400 flex items-center gap-1">
-              <DollarSign className="w-3.5 h-3.5" /> Target Budget
+              <DollarSign className="w-3.5 h-3.5 text-slate-400" /> Target Budget
             </span>
             <span className="font-mono font-semibold text-slate-900 mt-1 block">
               {rfq.budget ? `₹${Number(rfq.budget).toLocaleString()}` : 'Unspecified'}
@@ -225,11 +252,29 @@ export const RFQDetailPage: React.FC = () => {
 
           <div>
             <span className="text-slate-400 flex items-center gap-1">
-              <Building2 className="w-3.5 h-3.5" /> Issuing Buyer
+              <Building2 className="w-3.5 h-3.5 text-slate-400" /> Issuing Buyer
             </span>
             <span className="font-medium text-slate-800 mt-1 block">
               {rfq.buyer?.name || 'Authorized Buyer'}
             </span>
+          </div>
+        </div>
+
+        {/* Dedicated Delivery Location & Shipping Destination Card */}
+        <div className="p-4 rounded-xl bg-slate-50/90 border border-slate-200 flex items-start gap-3.5">
+          <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 shrink-0 mt-0.5">
+            <MapPin className="w-4 h-4" />
+          </div>
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                Delivery Location & Consignment Address
+              </span>
+              <span className="text-[11px] text-slate-400 font-medium">Physical Delivery Site</span>
+            </div>
+            <p className="text-xs sm:text-sm font-medium text-slate-800 whitespace-pre-line break-words leading-relaxed">
+              {rfq.deliveryLocation}
+            </p>
           </div>
         </div>
       </div>
@@ -298,27 +343,38 @@ export const RFQDetailPage: React.FC = () => {
             {attachmentsRes.data.map((att) => (
               <div
                 key={att.id}
-                className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-3"
+                className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 hover:bg-slate-100/75 transition-colors group"
               >
-                <div className="flex items-center gap-2.5 truncate">
+                <button
+                  type="button"
+                  onClick={() => handleDownloadAttachment(att.id, att.originalFilename)}
+                  className="flex items-center gap-2.5 truncate text-left flex-1 min-w-0 cursor-pointer"
+                  title={`Download ${att.originalFilename}`}
+                >
                   <FileText className="w-5 h-5 text-indigo-600 shrink-0" />
                   <div className="truncate">
-                    <span className="text-xs font-medium text-slate-800 truncate block">
+                    <span className="text-xs font-medium text-slate-800 truncate block group-hover:text-indigo-600 transition-colors">
                       {att.originalFilename}
                     </span>
                     <span className="text-[10px] text-slate-400 font-mono">
                       {(att.fileSize / (1024 * 1024)).toFixed(2)} MB
                     </span>
                   </div>
-                </div>
+                </button>
 
-                <a
-                  href={`/api/attachments/${att.id}/download`}
-                  className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-indigo-600 shadow-sm transition-colors shrink-0"
+                <button
+                  type="button"
+                  onClick={() => handleDownloadAttachment(att.id, att.originalFilename)}
+                  disabled={downloadingId === att.id}
+                  className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 shadow-sm transition-colors shrink-0 cursor-pointer disabled:opacity-50"
                   title="Download File"
                 >
-                  <Download className="w-4 h-4" />
-                </a>
+                  {downloadingId === att.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             ))}
           </div>

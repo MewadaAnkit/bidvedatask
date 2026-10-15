@@ -14,6 +14,7 @@ import {
   ChevronRight,
   TrendingUp,
   ArrowRight,
+  MapPin,
 } from 'lucide-react';
 
 export const BuyerDashboardPage: React.FC = () => {
@@ -58,135 +59,97 @@ export const BuyerDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Welcome Banner */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Buyer Procurement Console</h1>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              Procurement Manager
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage procurement lifecycles, publish new RFQs, evaluate vendor bids, and award contracts.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/buyer/evaluations"
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            Bid Evaluations
-          </Link>
-          <Link
-            to="/rfqs/new"
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New RFQ</span>
-          </Link>
-        </div>
-      </div>
-
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Total RFQs */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Total RFQs</span>
             <Layers className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-slate-900">
-            {isStatsLoading ? '...' : stats?.totalRfqs ?? 0}
+          <div className="mt-2 text-2xl font-bold text-slate-900 font-mono">
+            {isStatsLoading ? '—' : stats?.totalRfqs ?? 0}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Across all statuses</div>
         </div>
 
         {/* Open For Bidding */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Published</span>
             <Clock className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-emerald-600">
-            {isStatsLoading ? '...' : stats?.publishedRfqs ?? 0}
+          <div className="mt-2 text-2xl font-bold text-emerald-600 font-mono">
+            {isStatsLoading ? '—' : stats?.publishedRfqs ?? 0}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Accepting vendor bids</div>
         </div>
 
         {/* Quotes Received */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Bids Received</span>
             <FileCheck className="w-4 h-4 text-indigo-500" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-slate-900">
-            {isStatsLoading ? '...' : stats?.totalQuotesReceived ?? 0}
+          <div className="mt-2 text-2xl font-bold text-slate-900 font-mono">
+            {isStatsLoading ? '—' : stats?.totalQuotesReceived ?? 0}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Total vendor submissions</div>
         </div>
 
         {/* Pending Evaluation */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Pending Review</span>
             <TrendingUp className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-amber-600">
-            {isStatsLoading ? '...' : stats?.pendingEvaluationCount ?? 0}
+          <div className="mt-2 text-2xl font-bold text-amber-600 font-mono">
+            {isStatsLoading ? '—' : stats?.pendingEvaluationCount ?? 0}
           </div>
-          <div className="mt-1 text-xs text-slate-500">RFQs ready for award</div>
         </div>
 
         {/* Awarded Spend */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Awarded Spend</span>
             <DollarSign className="w-4 h-4 text-slate-700" />
           </div>
-          <div className="mt-3 text-xl font-bold text-slate-900 truncate">
-            {isStatsLoading ? '...' : formatCurrency(stats?.totalAwardedSpend)}
-          </div>
-          <div className="mt-1 text-xs text-emerald-700 font-medium">
-            {stats?.awardedRfqs ?? 0} contracts awarded
+          <div className="mt-2 text-xl font-bold text-slate-900 font-mono truncate">
+            {isStatsLoading ? '—' : formatCurrency(stats?.totalAwardedSpend)}
           </div>
         </div>
       </div>
 
       {/* Recent RFQs Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div className="p-4 sm:px-6 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Recent Procurement RFQs</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Recent RFQs</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Overview of your active sourcing requisitions and incoming quotes
+              Active sourcing requisitions and quotes
             </p>
           </div>
           <Link
             to="/rfqs"
             className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
           >
-            <span>View All RFQs</span>
+            <span>View All</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="overflow-x-auto">
           {isRfqsLoading ? (
-            <div className="p-8 text-center text-sm text-slate-400">Loading procurement items...</div>
+            <div className="p-8 text-center text-sm text-slate-400">Loading RFQs...</div>
           ) : recentRfqs.length === 0 ? (
             <div className="p-12 text-center">
-              <Layers className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <h3 className="text-sm font-semibold text-slate-800">No RFQs Created Yet</h3>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                Get started by creating your first Request For Quotation to invite vendor bids.
+              <Layers className="w-8 h-8 text-slate-300 mx-auto mb-2.5" />
+              <h3 className="text-sm font-medium text-slate-800">No RFQs yet</h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                Create a Request for Quotation to start receiving quotes from vendors.
               </p>
               <Link
                 to="/rfqs/new"
-                className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="mt-3.5 inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Create RFQ</span>
+                <span>Create an RFQ &rarr;</span>
               </Link>
             </div>
           ) : (
@@ -212,9 +175,18 @@ export const BuyerDashboardPage: React.FC = () => {
                       >
                         {rfq.title}
                       </Link>
-                      <span className="text-xs text-slate-400">
-                        {rfq.lineItems?.length || 0} line items
-                      </span>
+                      <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                        <span>{rfq.lineItems?.length || 0} line items</span>
+                        {rfq.deliveryLocation && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate max-w-[200px] flex items-center gap-1 text-slate-500" title={rfq.deliveryLocation}>
+                              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                              {rfq.deliveryLocation}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-xs font-medium text-slate-600">
                       <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">

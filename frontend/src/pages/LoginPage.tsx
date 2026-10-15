@@ -7,11 +7,24 @@ import { Lock, Mail, ArrowRight, ShieldCheck, UserCheck, Briefcase } from 'lucid
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // If already logged in, redirect immediately to the respective dashboard/overview
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'ADMIN') {
+        navigate('/admin', { replace: true });
+      } else if (user.role === 'BUYER') {
+        navigate('/buyer', { replace: true });
+      } else {
+        navigate('/vendor', { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e?: React.FormEvent, customEmail?: string, customPassword?: string) => {
     if (e) e.preventDefault();
@@ -29,11 +42,11 @@ export const LoginPage: React.FC = () => {
 
       login(res.data.token, res.data.user);
       if (res.data.user.role === 'ADMIN') {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else if (res.data.user.role === 'BUYER') {
-        navigate('/buyer');
+        navigate('/buyer', { replace: true });
       } else {
-        navigate('/vendor');
+        navigate('/vendor', { replace: true });
       }
     } catch (err: any) {
       if (err instanceof ApiError) {

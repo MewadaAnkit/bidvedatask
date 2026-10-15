@@ -173,16 +173,6 @@ export const RFQListPage: React.FC = () => {
               <List className="w-4 h-4" />
             </button>
           </div>
-
-          {(isBuyer || isAdmin) && (
-            <Link
-              to={isAdmin ? '/admin/rfqs/new' : '/rfqs/new'}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Create RFQ</span>
-            </Link>
-          )}
         </div>
       </div>
 
@@ -199,7 +189,7 @@ export const RFQListPage: React.FC = () => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search keyword..."
+              placeholder="Search RFQs..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
             />
           </div>
@@ -214,7 +204,7 @@ export const RFQListPage: React.FC = () => {
                 setCategory(e.target.value);
                 setPage(1);
               }}
-              placeholder="Category (e.g. Machinery)..."
+              placeholder="Category..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
             />
           </div>
@@ -229,7 +219,7 @@ export const RFQListPage: React.FC = () => {
                 setLocation(e.target.value);
                 setPage(1);
               }}
-              placeholder="Delivery Location..."
+              placeholder="Location..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
             />
           </div>
@@ -316,12 +306,15 @@ export const RFQListPage: React.FC = () => {
                     </div>
 
                     <div className="pt-2 border-t border-slate-100 space-y-1.5 text-xs text-slate-600">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400 flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-slate-400 flex items-center gap-1 shrink-0 pt-0.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           Location:
                         </span>
-                        <span className="font-medium truncate max-w-[150px] text-right text-slate-800">
+                        <span
+                          title={rfq.deliveryLocation}
+                          className="font-medium line-clamp-2 break-words text-right text-slate-800"
+                        >
                           {rfq.deliveryLocation}
                         </span>
                       </div>
@@ -439,8 +432,16 @@ export const RFQListPage: React.FC = () => {
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 text-xs text-slate-600 truncate max-w-[120px]">
-                        {rfq.deliveryLocation}
+                      <td
+                        title={rfq.deliveryLocation}
+                        className="py-3 px-4 text-xs text-slate-700 max-w-[220px]"
+                      >
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                          <span className="line-clamp-2 break-words leading-snug">
+                            {rfq.deliveryLocation}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-3 px-4 font-semibold text-slate-900">

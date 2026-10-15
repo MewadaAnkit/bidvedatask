@@ -57,7 +57,6 @@ export const AppLayout: React.FC = () => {
         { name: 'Overview', path: '/buyer', exact: true, icon: LayoutDashboard },
         { name: 'My RFQs', path: '/rfqs', exact: true, icon: Layers },
         { name: 'Bid Evaluations', path: '/buyer/evaluations', exact: false, icon: FileCheck },
-        { name: 'Create RFQ', path: '/rfqs/new', exact: true, icon: PlusCircle },
       ];
     }
 
@@ -89,28 +88,28 @@ export const AppLayout: React.FC = () => {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/admin') return 'Admin Overview';
-    if (path.startsWith('/admin/users')) return 'User Management';
-    if (path.startsWith('/admin/rfqs')) return 'Platform RFQs';
-    if (path.startsWith('/admin/quotes')) return 'Master Quotes Ledger';
-    if (path.startsWith('/admin/audit-logs')) return 'Compliance Audit Logs';
+    if (path === '/admin') return 'Overview';
+    if (path.startsWith('/admin/users')) return 'Users';
+    if (path.startsWith('/admin/rfqs')) return 'RFQs';
+    if (path.startsWith('/admin/quotes')) return 'Quotes';
+    if (path.startsWith('/admin/audit-logs')) return 'Audit Logs';
 
-    if (path === '/buyer') return 'Buyer Procurement Overview';
+    if (path === '/buyer') return 'Overview';
     if (path === '/buyer/evaluations') return 'Bid Evaluations';
 
-    if (path === '/vendor') return 'Vendor Dashboard';
+    if (path === '/vendor') return 'Overview';
     if (path === '/my-bids') {
       if (location.search.includes('status=ACCEPTED')) return 'Won Contracts';
-      return 'My Quotations & Bids';
+      return 'My Bids';
     }
 
-    if (path === '/rfqs/new') return 'Draft New RFQ';
-    if (path.endsWith('/comparison')) return 'Bid Evaluation Matrix';
+    if (path === '/rfqs/new' || path.endsWith('/new')) return 'Create RFQ';
+    if (path.endsWith('/comparison')) return 'Compare Quotes';
     if (path.endsWith('/edit')) return 'Edit RFQ';
     if (path.startsWith('/rfqs/')) return 'RFQ Details';
     if (path === '/rfqs') {
       if (user?.role === 'BUYER') return 'My RFQs';
-      if (user?.role === 'VENDOR') return 'Open RFQs Marketplace';
+      if (user?.role === 'VENDOR') return 'Open RFQs';
       return 'All RFQs';
     }
 
@@ -313,13 +312,13 @@ export const AppLayout: React.FC = () => {
             )}
 
             {/* Buyer Actions */}
-            {user?.role === 'BUYER' && (
+            {user?.role === 'BUYER' && !location.pathname.endsWith('/new') && (
               <Link
                 to="/rfqs/new"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Create RFQ</span>
+                <span>New RFQ</span>
               </Link>
             )}
 

@@ -103,14 +103,10 @@ export class AttachmentController {
 
   static async download(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      if (!req.user) {
-        throw new AppError(401, 'UNAUTHORIZED', 'Authentication required');
-      }
-
       const { id } = req.params;
       const { stream, attachment } = await AttachmentService.getAttachmentStream(
-        req.user.id,
-        req.user.role,
+        req.user?.id,
+        req.user?.role,
         id
       );
 

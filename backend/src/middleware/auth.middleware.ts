@@ -21,12 +21,18 @@ declare global {
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-replace-with-secure-key-in-prod';
 
 export const authenticate = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+  let token: string | undefined;
+
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(new AppError(401, 'UNAUTHORIZED', 'Authentication token missing or invalid format'));
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query.token && typeof req.query.token === 'string') {
+    token = req.query.token;
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return next(new AppError(401, 'UNAUTHORIZED', 'Authentication token missing or invalid format'));
+  }
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
 
@@ -68,4 +74,35 @@ export const requireRole = (allowedRoles: Role[]) => {
     next();
   };
 };
+
+export const optionalAuthenticate = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+  let token: string | undefined;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query.token && typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
+    if (decoded && decoded.id && decoded.role) {
+      req.user = {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+        name: decoded.name || '',
+      };
+    }
+    next();
+  } catch (_err) {
+    next();
+  }
+};
+
 

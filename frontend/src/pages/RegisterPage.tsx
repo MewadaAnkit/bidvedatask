@@ -29,7 +29,13 @@ export const RegisterPage: React.FC = () => {
       });
 
       login(res.data.token, res.data.user);
-      navigate('/rfqs');
+      if (res.data.user.role === 'ADMIN') {
+        navigate('/admin', { replace: true });
+      } else if (res.data.user.role === 'BUYER') {
+        navigate('/buyer', { replace: true });
+      } else {
+        navigate('/vendor', { replace: true });
+      }
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);

@@ -107,8 +107,8 @@ export class AttachmentService {
    * Strictly enforces sealed bid privacy and ownership.
    */
   static async getAttachmentStream(
-    userId: string,
-    userRole: Role,
+    userId: string | undefined,
+    userRole: Role | undefined,
     attachmentId: string
   ) {
     const attachment = await prisma.attachment.findUnique({
@@ -129,15 +129,19 @@ export class AttachmentService {
         throw new AppError(404, 'NOT_FOUND', 'Parent RFQ not found');
       }
 
-      if (userRole === Role.BUYER && rfq.buyerId !== userId) {
-        throw new AppError(404, 'NOT_FOUND', 'Attachment not found');
+      // If RFQ is DRAFT, require user to be the owner buyer or admin
+      if (rfq.status === RfqStatus.DRAFT) {
+        if (!userId || !userRole || (userRole === Role.BUYER && rfq.buyerId !== userId)) {
+          throw new AppError(401, 'UNAUTHORIZED', 'Authentication required to access draft specifications');
+        }
+      }
+      // If RFQ is PUBLISHED, CLOSED, or AWARDED:
+      // It's a public RFQ specification! Anyone (vendors, buyers, guests) can download it.
+    } else if (attachment.entityType === EntityType.QUOTE) {
+      if (!userId || !userRole) {
+        throw new AppError(401, 'UNAUTHORIZED', 'Authentication required to access quote documents');
       }
 
-      // Vendors can only access specs of PUBLISHED/CLOSED/AWARDED RFQs, never DRAFT
-      if (userRole === Role.VENDOR && rfq.status === RfqStatus.DRAFT) {
-        throw new AppError(404, 'NOT_FOUND', 'Attachment not found');
-      }
-    } else if (attachment.entityType === EntityType.QUOTE) {
       const quote = await prisma.quote.findUnique({
         where: { id: attachment.entityId },
         include: { rfq: true },

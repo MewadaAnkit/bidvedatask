@@ -11,9 +11,9 @@ export const rfqLineItemSchema = z.object({
 
 export const createRfqSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(200),
-  description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
+  description: z.string().min(2, 'Description must be at least 2 characters').max(5000),
   category: z.string().min(2, 'Category is required').max(100),
-  deliveryLocation: z.string().min(2, 'Delivery location is required').max(200),
+  deliveryLocation: z.string().min(2, 'Delivery location is required').max(500),
   budget: z
     .number({ invalid_type_error: 'Budget must be a positive number' })
     .positive('Budget must be positive')

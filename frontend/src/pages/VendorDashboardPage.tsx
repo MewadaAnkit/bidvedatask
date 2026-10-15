@@ -66,98 +66,61 @@ export const VendorDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Welcome Banner */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Vendor Portal</h1>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Supplier Console
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Monitor bidding opportunities, track submitted quotations, and review awarded contracts.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/my-bids"
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            My Bids Ledger
-          </Link>
-          <Link
-            to="/rfqs"
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1.5"
-          >
-            <span>Explore Open RFQs</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
-
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Open Opportunities */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Marketplace</span>
             <Layers className="w-4 h-4 text-indigo-500" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-slate-900">
-            {isStatsLoading ? '...' : stats?.openRfqsCount ?? 0}
+          <div className="mt-2 text-2xl font-bold text-slate-900 font-mono">
+            {isStatsLoading ? '—' : stats?.openRfqsCount ?? 0}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Open RFQs for bidding</div>
         </div>
 
         {/* Total Bids Placed */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Total Placed</span>
             <FileCheck className="w-4 h-4 text-slate-500" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-slate-900">
-            {isStatsLoading ? '...' : stats?.totalBids ?? 0}
+          <div className="mt-2 text-2xl font-bold text-slate-900 font-mono">
+            {isStatsLoading ? '—' : stats?.totalBids ?? 0}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Quotations submitted</div>
         </div>
 
         {/* Active Under Review */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Active Bids</span>
             <Clock className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-slate-900">
-            {isStatsLoading ? '...' : stats?.activeBids ?? 0}
+          <div className="mt-2 text-2xl font-bold text-amber-600 font-mono">
+            {isStatsLoading ? '—' : stats?.activeBids ?? 0}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Under evaluation</div>
         </div>
 
         {/* Won Contracts */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Won Contracts</span>
             <Award className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="mt-3 text-2xl font-bold text-emerald-600">
-            {isStatsLoading ? '...' : stats?.wonBids ?? 0}
-          </div>
-          <div className="mt-1 text-xs text-emerald-700 font-medium">
-            {stats?.winRate ?? 0}% Win Rate
+          <div className="mt-2 text-2xl font-bold text-emerald-600 font-mono">
+            {isStatsLoading ? '—' : stats?.wonBids ?? 0}
           </div>
         </div>
 
         {/* Won Value */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium uppercase tracking-wider">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Awarded Value</span>
             <DollarSign className="w-4 h-4 text-slate-700" />
           </div>
-          <div className="mt-3 text-xl font-bold text-slate-900 truncate">
-            {isStatsLoading ? '...' : formatCurrency(stats?.wonValue)}
+          <div className="mt-2 text-xl font-bold text-slate-900 font-mono truncate">
+            {isStatsLoading ? '—' : formatCurrency(stats?.wonValue)}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Gross contract volume</div>
         </div>
       </div>
 
